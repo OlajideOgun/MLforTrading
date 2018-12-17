@@ -6,15 +6,7 @@ import matplotlib.pyplot as plt
 cwd = os.getcwd()
 
 
-def plot_selected(df, columns, start_index, end_index):
 
-    selected_df = df[columns].ix[start_index:end_index]
-
-    "Normalize Stock data for plotting(make everything start at 1)"
-    selected_df = selected_df / selected_df.ix[0,:]
-
-    """Plot the desired columns over index values in the given range."""
-    plot_data(selected_df,title="Stock Prices")
 
 
 
@@ -50,11 +42,61 @@ def get_data(symbols, dates):
 
     return df
 
+
+def get_rolling_mean(values, window):
+    """Return rolling mean of given values, using specified window size."""
+    return pd.rolling_mean(values, window=window)
+
+
+def get_rolling_std(values, window):
+    """Return rolling standard deviation of given values, using specified window size."""
+    return pd.rolling_std(values, window=window)
+
+
+def get_bollinger_bands(rm, rstd):
+    """Return upper and lower Bollinger Bands."""
+    lower_band = rm - (2 * rstd)
+    upper_band = rm + (2 * rstd)
+
+    return upper_band, lower_band
+
+def plot_selected(df, columns, start_index, end_index):
+
+    selected_df = df[columns].ix[start_index:end_index]
+
+    "Normalize Stock data for plotting(make everything start at 1)"
+    selected_df = selected_df / selected_df.ix[0,:]
+
+    """Plot the desired columns over index values in the given range."""
+    plot_data(selected_df,title="Stock Prices")
+
 def plot_data(df, title="Stock prices"):
     """Plot stock prices with a custom title and meaningful axis labels."""
     ax = df.plot(title=title, fontsize=12)
     ax.set_xlabel("Date")
     ax.set_ylabel("Price")
+    plt.show()
+
+
+def plot_bollinger_bands(df):
+    """Plot Bollinger bands graph"""
+
+    rolling_mean = get_rolling_mean(df["SPY"],window=20)
+    rolling_std = get_rolling_std(df["SPY"],window=20)
+    upper_band, lower_band = get_bollinger_bands(rolling_mean, rolling_std)
+
+
+
+    # Plot raw  values, rolling mean and Bollinger Bands
+    ax = df['SPY'].plot(title="Bollinger Bands", label='SPY')
+    rolling_mean.plot(label='Rolling mean', ax=ax)
+    upper_band.plot(label='upper band', ax=ax)
+    lower_band.plot(label='lower band', ax=ax)
+
+    # Add axis labels and legend
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Price")
+    ax.legend(loc='upper left')
     plt.show()
 
 
@@ -68,9 +110,17 @@ def test_run():
     # Get stock data
     df = get_data(symbols, dates)
 
+    # Plot Bollinger Graph
+    plot_bollinger_bands(df)
+
     # Slice and plot
-    plot_selected(df, ['SPY', 'IBM'], '2010-03-01', '2010-04-01')
+    # plot_selected(df, ['SPY', 'IBM'], '2010-03-01', '2010-04-01')
+
 
 
 if __name__ == "__main__":
     test_run()
+
+
+
+
